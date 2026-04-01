@@ -1,0 +1,162 @@
+enum ExperienceCategory {
+  INTERNSHIP
+  GRADUATE_RECOMMENDATION
+  CAREER_PLANNING
+  COURSE_SELECTION
+  RESEARCH
+  JOB_HUNT
+  OTHER
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model User {
+  id             Int               @id @default(autoincrement())
+  username       String            @unique(map: "idx_user_username_unique") @db.VarChar(64)
+  email          String            @unique(map: "idx_user_email_unique") @db.VarChar(120)
+  hashedPassword String?           @map("hashed_password") @db.VarChar(255)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  profile        AiUserProfile?
+  conversations  Conversation[]
+  entriesCreated ExperienceEntry[]
+
+  @@map("user")
+}
+
+model AiUserProfile {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map("user_id")
+  school    String?  @db.VarChar
+  grade     String?  @db.VarChar
+  major     String?  @db.VarChar
+  target    String?  @db.VarChar
+  tags      Json?
+  bio       String?  @db.VarChar(1024)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_ai_user_profile_user_id")
+  @@map("ai_user_profile")
+}
+
+model SeniorProfile {
+  id             Int               @id @default(autoincrement())
+  name           String            @db.VarChar(120)
+  school         String            @db.VarChar(120)
+  major          String?           @db.VarChar(120)
+  graduationYear Int?              @map("graduation_year")
+  destination    String?           @db.VarChar(120)
+  direction      String?           @db.VarChar(120)
+  intro          String?           @db.VarChar(1024)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  entries        ExperienceEntry[]
+
+  @@index([school], map: "idx_senior_profile_school")
+  @@index([direction], map: "idx_senior_profile_direction")
+  @@map("senior_profile")
+}
+
+model ExperienceEntry {
+  id              Int                @id @default(autoincrement())
+  seniorProfileId Int                @map("senior_profile_id")
+  title           String             @db.VarChar(200)
+  category        ExperienceCategory @default(OTHER)
+  content         String             @db.VarChar(6000)
+  applicableTo    String?            @map("applicable_to") @db.VarChar(512)
+  outcome         String?            @db.VarChar(1024)
+  happenedAt      DateTime?          @map("happened_at") @db.Timestamptz(6)
+  sourceNote      String?            @map("source_note") @db.VarChar(1024)
+  createdById     Int?               @map("created_by_id")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  seniorProfile   SeniorProfile      @relation(fields: [seniorProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  createdBy       User?              @relation(fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  tags            ExperienceEntryTag[]
+  references      SourceReference[]
+
+  @@index([category], map: "idx_experience_entry_category")
+  @@index([seniorProfileId], map: "idx_experience_entry_senior_profile_id")
+  @@index([createdById], map: "idx_experience_entry_created_by_id")
+  @@map("experience_entry")
+}
+
+model Tag {
+  id        Int                @id @default(autoincrement())
+  name      String             @unique(map: "idx_tag_name_unique") @db.VarChar(60)
+  category  String?            @db.VarChar(60)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  entries   ExperienceEntryTag[]
+
+  @@map("tag")
+}
+
+model ExperienceEntryTag {
+  id        Int             @id @default(autoincrement())
+  entryId   Int             @map("entry_id")
+  tagId     Int             @map("tag_id")
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  entry     ExperienceEntry @relation(fields: [entryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tag       Tag             @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([entryId, tagId], map: "idx_experience_entry_tag_unique")
+  @@index([entryId], map: "idx_experience_entry_tag_entry_id")
+  @@index([tagId], map: "idx_experience_entry_tag_tag_id")
+  @@map("experience_entry_tag")
+}
+
+model Conversation {
+  id         Int           @id @default(autoincrement())
+  userId     Int           @map("user_id")
+  title      String?       @db.VarChar(160)
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt DateTime?     @map("archived_at") @db.Timestamptz(6)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  messages   ChatMessage[]
+
+  @@index([userId], map: "idx_conversation_user_id")
+  @@map("conversation")
+}
+
+model ChatMessage {
+  id             Int               @id @default(autoincrement())
+  conversationId Int               @map("conversation_id")
+  role           ChatRole
+  content        String            @db.VarChar(12000)
+  contextSummary String?           @map("context_summary") @db.VarChar(4000)
+  model          String?           @db.VarChar(80)
+  tokenUsage     Int?              @map("token_usage")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  references     SourceReference[]
+
+  @@index([conversationId], map: "idx_chat_message_conversation_id")
+  @@index([role], map: "idx_chat_message_role")
+  @@map("chat_message")
+}
+
+model SourceReference {
+  id        Int            @id @default(autoincrement())
+  messageId Int            @map("message_id")
+  entryId   Int            @map("entry_id")
+  quote     String?        @db.VarChar(1000)
+  reason    String?        @db.VarChar(512)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  message   ChatMessage    @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  entry     ExperienceEntry @relation(fields: [entryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([messageId], map: "idx_source_reference_message_id")
+  @@index([entryId], map: "idx_source_reference_entry_id")
+  @@map("source_reference")
+}
