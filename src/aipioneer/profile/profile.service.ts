@@ -11,7 +11,7 @@ export class ProfileService {
       where: { id: userId },
       select: { id: true, username: true, email: true, createdAt: true },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('用户不存在');
 
     const profile = await this.prisma.aiUserProfile.findUnique({
       where: { userId },
@@ -25,7 +25,7 @@ export class ProfileService {
       where: { id: userId },
       select: { id: true },
     });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException('用户不存在');
 
     const profile = await this.prisma.aiUserProfile.upsert({
       where: { userId },

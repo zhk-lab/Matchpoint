@@ -1,12 +1,12 @@
 ---
-name: AI前辈 V1 计划
-overview: 在 4.15 前完成 AI前辈第一版，采用轻量化复用 `cheese-backend` 基础设施的路线，优先交付登录、个人主页、历史聊天和基于结构化资料检索的 AI 问答闭环。
+name: Matchpoint(寻星) V1 计划
+overview: 在 4.15 前完成 Matchpoint(寻星) 第一版，采用轻量化复用旧后端基础设施的路线，优先交付登录、个人主页、历史聊天和基于结构化资料检索的 AI 问答闭环。
 todos:
   - id: define-v1-schema
     content: 确定 V1 的核心数据模型：用户、个人主页、师兄师姐资料、聊天会话、消息、引用来源
     status: completed
   - id: bootstrap-light-backend
-    content: 基于 cheese-backend 的 NestJS/Prisma 配置与鉴权思路，搭建轻量后端骨架并删掉无关模块
+    content: 基于旧后端的 NestJS/Prisma 配置与鉴权思路，搭建轻量后端骨架并删掉无关模块
     status: completed
   - id: build-retrieval-chat-loop
     content: 实现资料检索、上下文组装和模型问答的后端闭环
@@ -17,7 +17,7 @@ todos:
 isProject: false
 ---
 
-# AI前辈 V1 计划
+# Matchpoint(寻星) V1 计划
 
 ## 结论
 
@@ -30,9 +30,9 @@ isProject: false
   5. 最后做以聊天框为中心的网页联调。
 - 原因：如果没有先定义数据结构和检索路径，大模型只能“会说话”，但不能稳定回答“实习/保研/规划”这类需要证据来源的问题。
 
-## 对 `cheese-backend` 的判断
+## 对旧后端模板的判断
 
-- 这个仓库适合借鉴为“轻量 AI 产品后端骨架”，不适合直接当成 AI前辈成品后端。
+- 这个仓库适合借鉴为“轻量 AI 产品后端骨架”，不适合直接当成 Matchpoint(寻星) 成品后端。
 - 最值得复用的是基础设施，而不是问答业务本身。
 
 ## 可借鉴模块
@@ -175,7 +175,7 @@ citedAnswer --> messageStore[聊天记录存储]
 
 ## 我建议的落地策略
 
-- 保留 `cheese-backend` 的技术栈思路。
+- 保留旧后端模板的技术栈思路。
 - 删除它的社区问答业务层。
 - 新建你自己的轻量模块：`auth`、`users`、`profiles`、`knowledge`、`chat`、`ai`。
 - 第一版不要把精力浪费在复杂认证和重型搜索引擎上，先把“有依据地回答问题”做出来。

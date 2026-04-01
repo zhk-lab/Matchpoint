@@ -49,7 +49,7 @@ export class KnowledgeService {
       select: { id: true, deletedAt: true },
     });
     if (!senior || senior.deletedAt) {
-      throw new NotFoundException('Senior profile not found');
+      throw new NotFoundException('师兄师姐画像不存在');
     }
 
     const normalizedTags = (dto.tags ?? [])

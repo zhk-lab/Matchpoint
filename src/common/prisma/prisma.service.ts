@@ -1,14 +1,4 @@
-/*
- *  Description: This file defines PrismaService, which extends PrismaClient.
- *               Extensions are added to PrismaService to support soft delete.
- *
- *
- *  Author(s):
- *      Nictheboy Li    <nictheboy@outlook.com>
- *
- */
-
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { UseSoftDelete } from './soft-delete.decorator';
 
@@ -45,7 +35,17 @@ export class PrismaService
   extends PrismaClientExtended
   implements OnModuleInit
 {
+  private readonly logger = new Logger(PrismaService.name);
+
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      await this.$queryRaw`SELECT 1`;
+    } catch (error) {
+      this.logger.error(
+        'Failed to connect to PostgreSQL. Check PRISMA_DATABASE_URL and ensure the database server is running.',
+      );
+      throw error;
+    }
   }
 }

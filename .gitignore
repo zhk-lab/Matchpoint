@@ -40,14 +40,5 @@ lerna-debug.log*
 
 .pnpm-store/
 
-src/avatars/images
-
-# for customizing devContainer on container startup
-.devcontainer/customize.sh
-
 # Runtime data
 uploads/
-
-# OAuth Providers (sensitive, do not commit)
-oauth-providers/
-plugins/

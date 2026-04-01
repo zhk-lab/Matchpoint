@@ -54,7 +54,7 @@ export class ChatAiService {
       {
         role: 'system',
         content:
-          '你是“AI前辈”助手。请严格基于提供的资料回答，给出可执行建议。若资料不足，明确说明不确定性并建议补充信息。请使用简洁中文作答。',
+          '你是“Matchpoint(寻星)”助手。请严格基于提供的资料回答，给出可执行建议。若资料不足，明确说明不确定性并建议补充信息。请使用简洁中文作答。',
       },
       ...params.history.map((item) => ({ role: item.role, content: item.content })),
       {

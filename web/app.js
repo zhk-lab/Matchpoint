@@ -1,6 +1,7 @@
 const API_BASE = '/api/v1';
+const TOKEN_STORAGE_KEY = 'matchpoint_token';
 
-let token = localStorage.getItem('ai_token') ?? '';
+let token = localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
 let currentConversationId = null;
 let me = null;
 
@@ -39,9 +40,9 @@ async function api(path, options = {}) {
 function setAuthToken(value) {
   token = value;
   if (value) {
-    localStorage.setItem('ai_token', value);
+    localStorage.setItem(TOKEN_STORAGE_KEY, value);
   } else {
-    localStorage.removeItem('ai_token');
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
   }
 }
 
@@ -56,7 +57,7 @@ function renderMessage(message) {
     refs.className = 'refs';
     refs.innerHTML = message.references
       .map((ref) => {
-        const title = ref.entry?.title ?? `Entry ${ref.entryId}`;
+        const title = ref.entry?.title ?? `经验 ${ref.entryId}`;
         const senior = ref.entry?.seniorProfile?.name
           ? ` - ${ref.entry.seniorProfile.name}`
           : '';

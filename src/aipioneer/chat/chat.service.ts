@@ -105,7 +105,7 @@ export class ChatService {
           create: citationEntries.map((item) => ({
             entryId: item.id,
             quote: item.content.slice(0, 220),
-            reason: `Matched by keywords and category; score=${item.score}`,
+            reason: `按关键词与类别召回；score=${item.score}`,
           })),
         },
       },
@@ -137,8 +137,8 @@ export class ChatService {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
     });
-    if (!conversation) throw new NotFoundException('Conversation not found');
-    if (conversation.userId !== userId) throw new ForbiddenException('Permission denied');
+    if (!conversation) throw new NotFoundException('会话不存在');
+    if (conversation.userId !== userId) throw new ForbiddenException('无权访问该会话');
     return conversation;
   }
 }

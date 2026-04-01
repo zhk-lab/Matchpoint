@@ -20,7 +20,7 @@ export class AuthService {
       select: { id: true },
     });
     if (existing) {
-      throw new BadRequestException('Email or username is already registered');
+      throw new BadRequestException('邮箱或用户名已被注册');
     }
 
     const hashedPassword = await hash(dto.password, 10);
@@ -56,12 +56,12 @@ export class AuthService {
     });
 
     if (!user || !user.hashedPassword) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('账号或密码错误');
     }
 
     const passwordMatched = await compare(dto.password, user.hashedPassword);
     if (!passwordMatched) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('账号或密码错误');
     }
 
     const accessToken = await this.signToken(user.id);
@@ -86,7 +86,7 @@ export class AuthService {
         createdAt: true,
       },
     });
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) throw new UnauthorizedException('用户不存在');
     return user;
   }
 

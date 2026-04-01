@@ -1,12 +1,3 @@
-/*
- *  Description: An decorator that will extend prisma service to support soft delete
- *               This decorator is only used in src/common/prisma/prisma.service.ts
- *
- *  Author(s):
- *      Nictheboy Li    <nictheboy@outlook.com>
- *
- */
-
 import { PrismaClientExtended } from './prisma.service';
 
 export function UseSoftDelete(
