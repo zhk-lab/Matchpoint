@@ -9,8 +9,11 @@
     "postinstall": "prisma-import -s \"src/**/*.prisma\" -o prisma/schema.prisma --force && prisma-case-format --file prisma/schema.prisma && prisma generate",
     "prisma:push": "prisma db push",
     "build": "nest build",
+    "status:dev": "node scripts/dev-server.js status",
+    "stop:dev": "node scripts/dev-server.js stop",
     "start": "nest start",
     "start:dev": "nest start --watch",
+    "start:dev:clean": "node scripts/dev-server.js start-clean",
     "start:prod": "node dist/main"
   },
   "dependencies": {

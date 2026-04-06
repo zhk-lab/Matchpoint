@@ -76,6 +76,24 @@ corepack pnpm start:dev
 
 浏览器访问：`http://localhost:3000`
 
+### 5) 常用开发命令
+
+```bash
+# 查看当前开发服务是否仍占用端口
+corepack pnpm status:dev
+
+# 干净关闭开发服务（适合 Windows 下 watch 子进程残留的情况）
+corepack pnpm stop:dev
+
+# 先清理旧进程，再启动开发服务
+corepack pnpm start:dev:clean
+```
+
+说明：
+
+- 正常关闭仍然建议在运行中的终端里按 `Ctrl + C`
+- 如果浏览器还能打开 `http://localhost:3000`，说明端口上还有残留进程，执行 `corepack pnpm stop:dev` 即可
+
 ## API 路径
 
 - 基础前缀：`/api/v1`
