@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { UserRole } from '@prisma/client';
 import { compare, hash } from 'bcryptjs';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
@@ -29,8 +30,9 @@ export class AuthService {
         email: dto.email,
         username: dto.username,
         hashedPassword,
+        role: dto.role ?? UserRole.USER,
       },
-      select: { id: true, email: true, username: true, createdAt: true },
+      select: { id: true, email: true, username: true, role: true, createdAt: true },
     });
 
     await this.prisma.aiUserProfile.create({
@@ -50,6 +52,7 @@ export class AuthService {
         id: true,
         email: true,
         username: true,
+        role: true,
         hashedPassword: true,
         createdAt: true,
       },
@@ -71,6 +74,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
+        role: user.role,
         createdAt: user.createdAt,
       },
     };
@@ -83,6 +87,7 @@ export class AuthService {
         id: true,
         email: true,
         username: true,
+        role: true,
         createdAt: true,
       },
     });

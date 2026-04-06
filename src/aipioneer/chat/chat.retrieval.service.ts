@@ -113,12 +113,39 @@ export class ChatRetrievalService {
       .map((item) => item.trim())
       .filter((item) => item.length >= 2);
 
-    // For short Chinese terms like "保研", "实习", keep the original phrase.
-    if (text.length <= 8 && text.trim().length > 0) {
-      base.push(text.trim());
+    const cjkSegments = text.match(/[\u4e00-\u9fff]{2,}/g) ?? [];
+    const cjkTokens: string[] = [];
+    for (const segment of cjkSegments) {
+      cjkTokens.push(segment);
+      for (let i = 0; i < segment.length - 1; i += 1) {
+        cjkTokens.push(segment.slice(i, i + 2));
+      }
+      for (let i = 0; i < segment.length - 2; i += 1) {
+        cjkTokens.push(segment.slice(i, i + 3));
+      }
     }
 
-    return [...new Set(base)].slice(0, 12);
+    const stopWords = new Set([
+      '我想',
+      '想要',
+      '有没有',
+      '相关',
+      '怎么',
+      '如何',
+      '请问',
+      '一下',
+      '接下来',
+      '安排',
+      '以及',
+      '还有',
+    ]);
+
+    const prioritized = [...base, ...cjkTokens]
+      .map((item) => item.trim())
+      .filter((item) => item.length >= 2)
+      .filter((item) => !stopWords.has(item));
+
+    return [...new Set(prioritized)].slice(0, 24);
   }
 
   private inferCategory(text: string): ExperienceCategory | undefined {

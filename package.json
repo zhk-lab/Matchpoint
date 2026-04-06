@@ -11,6 +11,7 @@
     "build": "nest build",
     "status:dev": "node scripts/dev-server.js status",
     "stop:dev": "node scripts/dev-server.js stop",
+    "seed:mock": "node scripts/seed-mock-data.js",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:dev:clean": "node scripts/dev-server.js start-clean",

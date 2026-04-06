@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>个人主页 - Matchpoint(寻星)</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body data-page="profile">
+    <header class="topbar">
+      <a class="brand" href="/">Matchpoint(寻星)</a>
+      <nav class="nav">
+        <a data-nav href="/">首页</a>
+        <a data-nav href="/profile.html">个人主页</a>
+        <a data-nav href="/chat.html">聊天</a>
+      </nav>
+      <div class="topbar-right">
+        <span id="userBadge">未登录</span>
+        <button id="logoutBtn" class="secondary">退出登录</button>
+      </div>
+    </header>
+
+    <main class="page profile-page">
+      <section class="card page-title-card">
+        <h2>个人主页</h2>
+        <p id="profileStateHint">未登录时显示账号入口；登录后会根据角色展示不同内容。</p>
+      </section>
+
+      <section id="profileGuestBlock" class="profile-section">
+        <div class="auth-grid">
+          <form id="registerForm" class="card hoverable-card">
+            <h3 id="registerTitle">注册新账号</h3>
+            <input id="registerRoleInput" type="hidden" name="role" value="USER" />
+            <input name="email" placeholder="邮箱" required />
+            <input name="username" placeholder="用户名（字母/数字/下划线）" required />
+            <input name="password" placeholder="密码（至少8位）" type="password" required />
+            <button id="registerBtn" type="submit">注册并进入个人主页</button>
+          </form>
+
+          <form id="loginForm" class="card hoverable-card">
+            <h3>登录</h3>
+            <input name="identifier" placeholder="邮箱或用户名" required />
+            <input name="password" placeholder="密码" type="password" required />
+            <button type="submit">登录进入个人主页</button>
+          </form>
+        </div>
+
+        <div class="card role-route">
+          <h3>选择注册路径</h3>
+          <p class="subtle">学长学姐可录入经验，咨询者主要填写个人信息并发起提问。</p>
+          <div class="role-switch">
+            <a id="seniorPathBtn" href="/profile.html?role=SENIOR">我是学长学姐（Senior）</a>
+            <a id="userPathBtn" href="/profile.html?role=USER">我是学生咨询者（User）</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="profileMemberBlock" class="profile-section hidden">
+        <div id="identityCard" class="card identity-card identity-card-user">
+          <div class="identity-top">
+            <div id="identityAvatar" class="identity-avatar">U</div>
+            <div>
+              <p class="identity-label">账号身份卡</p>
+              <h3 id="identityTitle">User 个人主页</h3>
+            </div>
+            <span id="memberRoleBadge" class="inline-badge">USER</span>
+          </div>
+          <p id="memberRoleDesc" class="subtle"></p>
+          <div id="identityCapability" class="identity-capability"></div>
+        </div>
+
+        <div class="card hoverable-card">
+          <h3 id="basicProfileTitle">个人主页（基础信息）</h3>
+          <p id="basicProfileHint" class="subtle">填写你的当前背景和目标，便于后续生成更贴合的建议。</p>
+          <form id="profileForm">
+            <input name="school" placeholder="学校 / 当前单位" />
+            <input name="grade" placeholder="年级 / 当前阶段" />
+            <input name="major" placeholder="专业 / 研究方向" />
+            <input name="target" placeholder="目标方向" />
+            <input name="tags" placeholder="标签，逗号分隔（如：中金,保研,AI）" />
+            <textarea name="bio" rows="3" placeholder="个人简介"></textarea>
+            <button type="submit">保存主页</button>
+          </form>
+        </div>
+
+        <div id="seniorOnlyBlock" class="knowledge-grid hidden">
+          <div class="card hoverable-card">
+            <h3>个人主页（Senior 履历）</h3>
+            <p class="subtle">补充可被咨询者检索的履历卡片，如去向、方向与经历简介。</p>
+            <form id="seniorForm">
+              <input name="name" placeholder="姓名（展示名）" required />
+              <input name="school" placeholder="学校" required />
+              <input name="major" placeholder="专业" />
+              <input name="graduationYear" placeholder="毕业年份" type="number" />
+              <input name="destination" placeholder="去向（公司/学校）" />
+              <input name="direction" placeholder="方向（实习/保研/求职）" />
+              <textarea name="intro" rows="3" placeholder="履历简介（你做过什么、擅长什么）"></textarea>
+              <button type="submit">保存履历</button>
+            </form>
+          </div>
+
+          <div class="card full-width hoverable-card">
+            <h3>个人主页（Senior 经验条目）</h3>
+            <p class="subtle">按主题沉淀可复用经验，聊天回答会自动引用并生成学长学姐明信片。</p>
+            <form id="entryForm">
+              <select name="seniorProfileId" id="seniorSelect" required></select>
+              <input name="title" placeholder="经验标题" required />
+              <select name="category">
+                <option value="INTERNSHIP">实习</option>
+                <option value="GRADUATE_RECOMMENDATION">保研</option>
+                <option value="CAREER_PLANNING">未来规划</option>
+                <option value="COURSE_SELECTION">选课</option>
+                <option value="RESEARCH">科研</option>
+                <option value="JOB_HUNT">求职</option>
+                <option value="OTHER">其他</option>
+              </select>
+              <textarea name="content" rows="4" placeholder="经验正文" required></textarea>
+              <input name="applicableTo" placeholder="适用人群" />
+              <input name="outcome" placeholder="结果" />
+              <input name="sourceNote" placeholder="来源备注" />
+              <input name="tags" placeholder="标签，逗号分隔" />
+              <button type="submit">保存经验条目</button>
+            </form>
+          </div>
+        </div>
+
+        <div id="userOnlyBlock" class="card hidden">
+          <h3>个人主页（User）</h3>
+          <p class="subtle">
+            你当前是咨询者身份（User）。维护好个人主页后，可直接去聊天页提问。Senior 履历与经验模块仅 Senior 可见。
+          </p>
+          <a class="plain-link" href="/chat.html">去聊天页提问</a>
+        </div>
+      </section>
+    </main>
+
+    <aside id="floatingActions" class="floating-actions hidden">
+      <a id="quickPrimary" class="floating-btn primary" href="/chat.html">去聊天提问</a>
+      <a id="quickSecondary" class="floating-btn" href="#profileForm">编辑个人主页</a>
+    </aside>
+
+    <div id="toast" class="toast hidden"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>

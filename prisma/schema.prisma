@@ -48,11 +48,17 @@ enum ChatRole {
   SYSTEM
 }
 
+enum UserRole {
+  USER
+  SENIOR
+}
+
 model User {
   id             Int               @id @default(autoincrement())
   username       String            @unique(map: "idx_user_username_unique") @db.VarChar(64)
   email          String            @unique(map: "idx_user_email_unique") @db.VarChar(120)
   hashedPassword String?           @map("hashed_password") @db.VarChar(255)
+  role           UserRole          @default(USER)
   createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)

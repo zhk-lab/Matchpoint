@@ -6,107 +6,50 @@
     <title>Matchpoint(寻星) V1</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
-  <body>
+  <body data-page="home">
     <header class="topbar">
-      <h1>Matchpoint(寻星)</h1>
+      <a class="brand" href="/">Matchpoint(寻星)</a>
+      <nav class="nav">
+        <a data-nav href="/">首页</a>
+        <a data-nav href="/profile.html">个人主页</a>
+        <a data-nav href="/chat.html">聊天</a>
+      </nav>
       <div class="topbar-right">
         <span id="userBadge">未登录</span>
         <button id="logoutBtn" class="secondary">退出登录</button>
       </div>
     </header>
 
-    <main class="layout">
-      <section class="panel auth-panel">
-        <h2>账号</h2>
-        <div class="auth-grid">
-          <form id="registerForm" class="card">
-            <h3>注册</h3>
-            <input name="email" placeholder="邮箱" required />
-            <input name="username" placeholder="用户名" required />
-            <input name="password" placeholder="密码(至少8位)" type="password" required />
-            <button type="submit">注册</button>
-          </form>
-
-          <form id="loginForm" class="card">
-            <h3>登录</h3>
-            <input name="identifier" placeholder="邮箱或用户名" required />
-            <input name="password" placeholder="密码" type="password" required />
-            <button type="submit">登录</button>
-          </form>
-        </div>
+    <main class="page home-page">
+      <section class="hero card">
+        <p class="eyebrow">V1 Demo</p>
+        <h1>选择你的身份，进入对应路径</h1>
+        <p>你可以作为学长学姐沉淀经验，也可以作为咨询同学发起提问。注册入口已拆成两条路径。</p>
       </section>
 
-      <section class="chat-core">
-        <div class="chat-header">
-          <h2>Matchpoint 对话</h2>
-          <button id="newConversationBtn">新建会话</button>
-        </div>
-        <div id="messages" class="messages"></div>
-        <form id="askForm" class="ask-bar">
-          <textarea
-            name="question"
-            id="questionInput"
-            rows="3"
-            placeholder="例如：我是大二计算机学生，想冲 2027 暑期大厂实习，应该如何规划？"
-            required
-          ></textarea>
-          <button type="submit">发送</button>
-        </form>
+      <section class="feature-grid role-grid">
+        <a class="feature-card role-card" href="/profile.html?role=SENIOR">
+          <p class="role-tag">Senior Path</p>
+          <h3>我是学长学姐</h3>
+          <p>注册后进入资料库，录入画像与经验，供后续检索与引用。</p>
+          <span>去注册（Senior） →</span>
+        </a>
+        <a class="feature-card role-card" href="/profile.html?role=USER">
+          <p class="role-tag">User Path</p>
+          <h3>我是学生咨询者</h3>
+          <p>注册后直接进入聊天，按目标岗位和时间线获取可执行建议。</p>
+          <span>去注册（User） →</span>
+        </a>
       </section>
 
-      <aside class="panel side-panel">
-        <div class="card">
-          <h3>个人主页</h3>
-          <form id="profileForm">
-            <input name="school" placeholder="学校" />
-            <input name="grade" placeholder="年级" />
-            <input name="major" placeholder="专业" />
-            <input name="target" placeholder="目标方向" />
-            <input name="tags" placeholder="标签，逗号分隔" />
-            <textarea name="bio" rows="3" placeholder="个人简介"></textarea>
-            <button type="submit">保存主页</button>
-          </form>
-        </div>
-
-        <div class="card">
-          <h3>历史会话</h3>
-          <div id="conversationList" class="list"></div>
-        </div>
-
-        <div class="card">
-          <h3>资料入库（V1）</h3>
-          <form id="seniorForm">
-            <input name="name" placeholder="师兄师姐姓名" required />
-            <input name="school" placeholder="学校" required />
-            <input name="major" placeholder="专业" />
-            <input name="graduationYear" placeholder="毕业年份" type="number" />
-            <input name="destination" placeholder="去向（公司/学校）" />
-            <input name="direction" placeholder="方向（实习/保研/求职）" />
-            <textarea name="intro" rows="2" placeholder="简介"></textarea>
-            <button type="submit">新增画像</button>
-          </form>
-          <hr />
-          <form id="entryForm">
-            <select name="seniorProfileId" id="seniorSelect" required></select>
-            <input name="title" placeholder="经验标题" required />
-            <select name="category">
-              <option value="INTERNSHIP">实习</option>
-              <option value="GRADUATE_RECOMMENDATION">保研</option>
-              <option value="CAREER_PLANNING">未来规划</option>
-              <option value="COURSE_SELECTION">选课</option>
-              <option value="RESEARCH">科研</option>
-              <option value="JOB_HUNT">求职</option>
-              <option value="OTHER">其他</option>
-            </select>
-            <textarea name="content" rows="3" placeholder="经验正文" required></textarea>
-            <input name="applicableTo" placeholder="适用人群" />
-            <input name="outcome" placeholder="结果" />
-            <input name="sourceNote" placeholder="来源备注" />
-            <input name="tags" placeholder="标签，逗号分隔" />
-            <button type="submit">新增经验</button>
-          </form>
-        </div>
-      </aside>
+      <section class="card quickstart compact">
+        <h3>快速开始</h3>
+        <ol>
+          <li>学长学姐：注册 Senior → 在个人主页维护经验库。</li>
+          <li>咨询同学：注册 User → 在个人主页完善信息后去聊天提问。</li>
+          <li>提问越具体（目标岗位/年级/时间线），回答越精准。</li>
+        </ol>
+      </section>
     </main>
 
     <div id="toast" class="toast hidden"></div>

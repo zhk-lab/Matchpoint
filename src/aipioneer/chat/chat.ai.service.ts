@@ -54,7 +54,7 @@ export class ChatAiService {
       {
         role: 'system',
         content:
-          '你是“Matchpoint(寻星)”助手。请严格基于提供的资料回答，给出可执行建议。若资料不足，明确说明不确定性并建议补充信息。请使用简洁中文作答。',
+          '你是“Matchpoint(寻星)”助手。请严格基于提供的资料回答，给出可执行建议。若资料不足，明确说明不确定性并建议补充信息。请使用简洁中文作答。不要输出思考过程、推理过程或任何 <think>...</think> 标签。',
       },
       ...params.history.map((item) => ({ role: item.role, content: item.content })),
       {
@@ -92,9 +92,13 @@ export class ChatAiService {
 
     const content = response.data?.choices?.[0]?.message?.content;
     const tokenUsage = response.data?.usage?.total_tokens as number | undefined;
+    const normalizedContent =
+      typeof content === 'string'
+        ? this.sanitizeAssistantAnswer(content)
+        : '暂时无法生成回答，请稍后再试。';
 
     return {
-      content: typeof content === 'string' ? content : '暂时无法生成回答，请稍后再试。',
+      content: normalizedContent,
       model: response.data?.model ?? model,
       tokenUsage,
       contextSummary,
@@ -134,5 +138,14 @@ export class ChatAiService {
       `- 优先参考：${refs}`,
       `说明：当前回答由本地兜底逻辑生成。配置 AI_API_KEY 后可获得更完整的大模型回答。`,
     ].join('\n');
+  }
+
+  private sanitizeAssistantAnswer(raw: string): string {
+    const removedThinkBlocks = raw.replace(/<think[\s\S]*?<\/think>/gi, '').trim();
+    const removedInlineThinkMarker = removedThinkBlocks
+      .replace(/^<\/?think>\s*/gi, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    return removedInlineThinkMarker || '暂时无法生成回答，请稍后再试。';
   }
 }

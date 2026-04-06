@@ -87,6 +87,9 @@ corepack pnpm stop:dev
 
 # 先清理旧进程，再启动开发服务
 corepack pnpm start:dev:clean
+
+# 一键写入 20 条模拟学长学姐数据（画像 + 经验）
+corepack pnpm seed:mock
 ```
 
 说明：
