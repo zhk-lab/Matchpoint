@@ -1,4 +1,6 @@
-![Matchpoint(寻星) logo](./logo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/zhk-lab/Matchpoint/main/logo.png" alt="Matchpoint(寻星) logo" width="400" />
+</p>
 
 # Matchpoint(寻星) V1
 
