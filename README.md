@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.jpg" alt="Matchpoint(寻星) logo" width="280" />
+  <img src="./logo.jpg" alt="Matchpoint(寻星) logo" width="400" />
 </p>
 
 # Matchpoint(寻星) V1
