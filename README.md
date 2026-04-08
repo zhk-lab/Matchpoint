@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/zhk-lab/Matchpoint/main/logo.png" alt="Matchpoint(寻星) logo" width="400" />
+  <img src="https://raw.githubusercontent.com/zhk-lab/Matchpoint/main/logo.JPG" alt="Matchpoint(寻星) logo" width="400" />
 </p>
 
 # Matchpoint(寻星) V1
