@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="./logo.png" alt="Matchpoint(寻星) logo" width="400" />
-</p>
+![Matchpoint(寻星) logo](./logo.png)
 
 # Matchpoint(寻星) V1
 
