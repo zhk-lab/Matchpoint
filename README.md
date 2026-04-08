@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./logo.jpg" alt="Matchpoint(寻星) logo" width="280" />
+</p>
+
 # Matchpoint(寻星) V1
 
 轻量化的 `Matchpoint(寻星)` V1 后端与网页演示，聚焦以下核心能力：
