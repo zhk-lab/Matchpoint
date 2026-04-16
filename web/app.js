@@ -7,6 +7,7 @@ let me = null;
 let privateConversationId = null;
 let privateSeniorProfile = null;
 let privatePollingTimer = null;
+let privateRenderedMessageIds = [];
 
 const byId = (id) => document.getElementById(id);
 const userBadge = byId('userBadge');
@@ -179,6 +180,7 @@ function formatSeniorSummary(senior, conversationUser = null) {
 function clearPrivateMessages() {
   if (!privateMessagesEl) return;
   privateMessagesEl.innerHTML = '';
+  privateRenderedMessageIds = [];
 }
 
 function renderPrivateMessage(message) {
@@ -195,8 +197,14 @@ function renderPrivateMessage(message) {
   }
   const roleClass = isMine ? 'user' : 'assistant';
   bubble.className = `message ${roleClass}`;
+  if (message?.id != null) {
+    bubble.dataset.privateMessageId = String(message.id);
+  }
   bubble.textContent = stripThinkBlocks(message.content) || '（无可展示内容）';
   privateMessagesEl.appendChild(bubble);
+  if (message?.id != null) {
+    privateRenderedMessageIds.push(String(message.id));
+  }
 }
 
 function showPrivateLoadingState() {
@@ -244,6 +252,12 @@ function startPrivatePolling() {
   }, 5000);
 }
 
+function isPrivateMessagesNearBottom(threshold = 48) {
+  if (!privateMessagesEl) return true;
+  const distance = privateMessagesEl.scrollHeight - privateMessagesEl.scrollTop - privateMessagesEl.clientHeight;
+  return distance <= threshold;
+}
+
 async function ensurePrivateConversation(senior) {
   const conversation = await api('/chat/conversations', {
     method: 'POST',
@@ -256,20 +270,41 @@ async function ensurePrivateConversation(senior) {
 }
 
 async function loadPrivateConversationMessages() {
-  clearPrivateMessages();
   if (!privateConversationId || !privateMessagesEl) return;
+  const wasNearBottom = isPrivateMessagesNearBottom();
   const messages = await api(`/chat/conversations/${privateConversationId}/messages`);
   if (!messages.length) {
-    const empty = document.createElement('p');
-    empty.className = 'private-loading';
-    empty.textContent = '已建立私聊，你可以开始提问。';
-    privateMessagesEl.appendChild(empty);
+    if (!privateRenderedMessageIds.length) {
+      clearPrivateMessages();
+      const empty = document.createElement('p');
+      empty.className = 'private-loading';
+      empty.textContent = '已建立私聊，你可以开始提问。';
+      privateMessagesEl.appendChild(empty);
+    }
     return;
   }
-  for (const message of messages) {
+
+  const incomingMessageIds = messages.map((message) => String(message.id));
+  const canAppendOnly =
+    privateRenderedMessageIds.length <= incomingMessageIds.length &&
+    privateRenderedMessageIds.every((id, index) => incomingMessageIds[index] === id);
+
+  if (!canAppendOnly) {
+    clearPrivateMessages();
+  }
+
+  if (!privateRenderedMessageIds.length) {
+    privateMessagesEl.innerHTML = '';
+  }
+
+  const startIndex = canAppendOnly ? privateRenderedMessageIds.length : 0;
+  for (const message of messages.slice(startIndex)) {
     renderPrivateMessage(message);
   }
-  privateMessagesEl.scrollTop = privateMessagesEl.scrollHeight;
+
+  if (!canAppendOnly || wasNearBottom) {
+    privateMessagesEl.scrollTop = privateMessagesEl.scrollHeight;
+  }
 }
 
 async function openPrivateChatFromSenior(senior) {

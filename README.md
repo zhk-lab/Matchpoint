@@ -108,3 +108,6 @@ corepack pnpm seed:mock
 - 个人主页：`/api/v1/profile/*`
 - 资料库：`/api/v1/knowledge/*`
 - 聊天：`/api/v1/chat/*`
+
+
+cloudflared tunnel --url http://localhost:3000
