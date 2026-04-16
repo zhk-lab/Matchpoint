@@ -17,8 +17,8 @@ export class KnowledgeController {
 
   @UseGuards(JwtAuthGuard)
   @Post('seniors')
-  createSenior(@Body() dto: CreateSeniorDto) {
-    return this.knowledgeService.createSenior(dto);
+  createSenior(@CurrentUserId() userId: number, @Body() dto: CreateSeniorDto) {
+    return this.knowledgeService.createSenior(userId, dto);
   }
 
   @Get('entries')

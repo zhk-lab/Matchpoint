@@ -9,9 +9,10 @@ import { QueryEntryDto } from './dto/query-entry.dto';
 export class KnowledgeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createSenior(dto: CreateSeniorDto) {
+  async createSenior(userId: number, dto: CreateSeniorDto) {
     return this.prisma.seniorProfile.create({
       data: {
+        ownerUserId: userId,
         name: dto.name.trim(),
         school: dto.school.trim(),
         major: dto.major?.trim(),

@@ -31,6 +31,8 @@ model User {
   profile        AiUserProfile?
   conversations  Conversation[]
   entriesCreated ExperienceEntry[]
+  ownedSeniorProfiles SeniorProfile[] @relation("SeniorProfileOwner")
+  sentMessages ChatMessage[] @relation("ChatMessageSenderUser")
 
   @@map("user")
 }
@@ -54,6 +56,7 @@ model AiUserProfile {
 
 model SeniorProfile {
   id             Int               @id @default(autoincrement())
+  ownerUserId    Int?              @map("owner_user_id")
   name           String            @db.VarChar(120)
   school         String            @db.VarChar(120)
   major          String?           @db.VarChar(120)
@@ -64,8 +67,12 @@ model SeniorProfile {
   createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  ownerUser      User?             @relation("SeniorProfileOwner", fields: [ownerUserId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   entries        ExperienceEntry[]
+  conversations  Conversation[]
+  sentMessages   ChatMessage[]     @relation("ChatMessageSenderSenior")
 
+  @@index([ownerUserId], map: "idx_senior_profile_owner_user_id")
   @@index([school], map: "idx_senior_profile_school")
   @@index([direction], map: "idx_senior_profile_direction")
   @@map("senior_profile")
@@ -124,20 +131,25 @@ model ExperienceEntryTag {
 model Conversation {
   id         Int           @id @default(autoincrement())
   userId     Int           @map("user_id")
+  seniorProfileId Int?     @map("senior_profile_id")
   title      String?       @db.VarChar(160)
   createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   archivedAt DateTime?     @map("archived_at") @db.Timestamptz(6)
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  seniorProfile SeniorProfile? @relation(fields: [seniorProfileId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   messages   ChatMessage[]
 
   @@index([userId], map: "idx_conversation_user_id")
+  @@index([seniorProfileId], map: "idx_conversation_senior_profile_id")
   @@map("conversation")
 }
 
 model ChatMessage {
   id             Int               @id @default(autoincrement())
   conversationId Int               @map("conversation_id")
+  senderUserId   Int?              @map("sender_user_id")
+  senderSeniorProfileId Int?       @map("sender_senior_profile_id")
   role           ChatRole
   content        String            @db.VarChar(12000)
   contextSummary String?           @map("context_summary") @db.VarChar(4000)
@@ -145,9 +157,13 @@ model ChatMessage {
   tokenUsage     Int?              @map("token_usage")
   createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  senderUser     User?             @relation("ChatMessageSenderUser", fields: [senderUserId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  senderSeniorProfile SeniorProfile? @relation("ChatMessageSenderSenior", fields: [senderSeniorProfileId], references: [id], onDelete: SetNull, onUpdate: NoAction)
   references     SourceReference[]
 
   @@index([conversationId], map: "idx_chat_message_conversation_id")
+  @@index([senderUserId], map: "idx_chat_message_sender_user_id")
+  @@index([senderSeniorProfileId], map: "idx_chat_message_sender_senior_profile_id")
   @@index([role], map: "idx_chat_message_role")
   @@map("chat_message")
 }

@@ -4,6 +4,9 @@ const TOKEN_STORAGE_KEY = 'matchpoint_token';
 let token = localStorage.getItem(TOKEN_STORAGE_KEY) ?? '';
 let currentConversationId = null;
 let me = null;
+let privateConversationId = null;
+let privateSeniorProfile = null;
+let privatePollingTimer = null;
 
 const byId = (id) => document.getElementById(id);
 const userBadge = byId('userBadge');
@@ -11,6 +14,17 @@ const toast = byId('toast');
 const messagesEl = byId('messages');
 const conversationListEl = byId('conversationList');
 const seniorSelectEl = byId('seniorSelect');
+const conversationHintEl = byId('conversationHint');
+const privateChatModalEl = byId('privateChatModal');
+const privateChatMaskEl = byId('privateChatMask');
+const closePrivateChatBtn = byId('closePrivateChatBtn');
+const privateChatTitleEl = byId('privateChatTitle');
+const privateChatMetaEl = byId('privateChatMeta');
+const privateMessagesEl = byId('privateMessages');
+const privateAskFormEl = byId('privateAskForm');
+const privateQuestionInputEl = byId('privateQuestionInput');
+const privateVideoBtn = byId('privateVideoBtn');
+const privateVoiceBtn = byId('privateVoiceBtn');
 const CATEGORY_LABEL = {
   INTERNSHIP: '实习',
   GRADUATE_RECOMMENDATION: '保研',
@@ -23,6 +37,10 @@ const CATEGORY_LABEL = {
 
 function normalizeRole(role) {
   return role === 'SENIOR' ? 'SENIOR' : 'USER';
+}
+
+function isSeniorViewer() {
+  return normalizeRole(me?.role) === 'SENIOR';
 }
 
 function stripThinkBlocks(content) {
@@ -77,6 +95,236 @@ function createChip(text) {
   return chip;
 }
 
+function formatConversationTitle(conversation) {
+  if (conversation?.seniorProfile?.name) {
+    if (isSeniorViewer()) {
+      return `来自 ${conversation.user?.username || '用户'} 的私聊`;
+    }
+    return `私聊 · ${conversation.seniorProfile.name}`;
+  }
+  return conversation?.title || '未命名会话';
+}
+
+function renderConversationListItem(convo) {
+  const item = document.createElement('div');
+  const isPrivate = Boolean(convo.seniorProfile);
+  const isActive = isPrivate ? privateConversationId === convo.id : currentConversationId === convo.id;
+  item.className = `list-item ${isActive ? 'active' : ''}`;
+  if (isPrivate) {
+    item.classList.add('private-list-item');
+  }
+
+  const header = document.createElement('div');
+  header.className = 'list-item-header';
+
+  const badge = document.createElement('span');
+  badge.className = `list-type-badge ${isPrivate ? 'private' : 'ai'}`;
+  badge.textContent = isPrivate ? '私聊' : 'AI';
+
+  const title = document.createElement('span');
+  title.className = 'list-item-title';
+  title.textContent = formatConversationTitle(convo);
+
+  const count = document.createElement('span');
+  count.className = 'list-item-meta';
+  count.textContent = `${convo._count.messages} 条`;
+
+  header.appendChild(badge);
+  header.appendChild(title);
+  item.appendChild(header);
+  item.appendChild(count);
+
+  item.onclick = async () => {
+    if (isPrivate) {
+      await openPrivateConversation(convo);
+      await loadConversations();
+      return;
+    }
+    privateConversationId = null;
+    privateSeniorProfile = null;
+    currentConversationId = convo.id;
+    closePrivateChatModal();
+    await loadConversations();
+    await loadConversationMessages();
+  };
+
+  return item;
+}
+
+function appendConversationSection(container, title, conversations) {
+  if (!conversations.length) return;
+  const section = document.createElement('section');
+  section.className = 'conversation-section';
+
+  const heading = document.createElement('p');
+  heading.className = 'conversation-section-title';
+  heading.textContent = `${title} (${conversations.length})`;
+  section.appendChild(heading);
+
+  for (const convo of conversations) {
+    section.appendChild(renderConversationListItem(convo));
+  }
+  container.appendChild(section);
+}
+
+function formatSeniorSummary(senior, conversationUser = null) {
+  if (!senior) return '资料暂不可用';
+  const detail = senior.direction || senior.destination || senior.major || '方向待补充';
+  if (isSeniorViewer()) {
+    return `咨询者：${conversationUser?.username || '匿名用户'} · ${senior.school || '学校未知'} · ${detail}`;
+  }
+  return `${senior.school || '学校未知'} · ${detail}`;
+}
+
+function clearPrivateMessages() {
+  if (!privateMessagesEl) return;
+  privateMessagesEl.innerHTML = '';
+}
+
+function renderPrivateMessage(message) {
+  if (!privateMessagesEl) return;
+  const bubble = document.createElement('div');
+  const hasSenderIdentity = Boolean(message.senderUserId || message.senderSeniorProfileId);
+  let isMine = false;
+  if (hasSenderIdentity) {
+    isMine = isSeniorViewer()
+      ? Boolean(privateSeniorProfile?.id && message.senderSeniorProfileId === privateSeniorProfile.id)
+      : Boolean(me?.id && message.senderUserId === me.id);
+  } else {
+    isMine = isSeniorViewer() ? message.role === 'ASSISTANT' : message.role === 'USER';
+  }
+  const roleClass = isMine ? 'user' : 'assistant';
+  bubble.className = `message ${roleClass}`;
+  bubble.textContent = stripThinkBlocks(message.content) || '（无可展示内容）';
+  privateMessagesEl.appendChild(bubble);
+}
+
+function showPrivateLoadingState() {
+  if (!privateMessagesEl) return;
+  privateMessagesEl.innerHTML = '';
+  const loading = document.createElement('p');
+  loading.className = 'private-loading';
+  loading.textContent = '正在加载私聊...';
+  privateMessagesEl.appendChild(loading);
+}
+
+function openPrivateChatModal() {
+  if (!privateChatModalEl) return;
+  privateChatModalEl.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+}
+
+function closePrivateChatModal() {
+  if (!privateChatModalEl) return;
+  privateChatModalEl.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  stopPrivatePolling();
+}
+
+function stopPrivatePolling() {
+  if (!privatePollingTimer) return;
+  clearInterval(privatePollingTimer);
+  privatePollingTimer = null;
+}
+
+function startPrivatePolling() {
+  stopPrivatePolling();
+  if (!privateConversationId) return;
+  privatePollingTimer = setInterval(async () => {
+    if (!privateConversationId || !privateChatModalEl || privateChatModalEl.classList.contains('hidden')) {
+      return;
+    }
+    try {
+      await loadPrivateConversationMessages();
+      await loadConversations();
+    } catch (error) {
+      // Keep polling lightweight and silent if backend is briefly unavailable.
+      console.error(error);
+    }
+  }, 5000);
+}
+
+async function ensurePrivateConversation(senior) {
+  const conversation = await api('/chat/conversations', {
+    method: 'POST',
+    body: JSON.stringify({
+      seniorProfileId: senior.id,
+      title: `与${senior.name || '学长学姐'}私聊`,
+    }),
+  });
+  return conversation;
+}
+
+async function loadPrivateConversationMessages() {
+  clearPrivateMessages();
+  if (!privateConversationId || !privateMessagesEl) return;
+  const messages = await api(`/chat/conversations/${privateConversationId}/messages`);
+  if (!messages.length) {
+    const empty = document.createElement('p');
+    empty.className = 'private-loading';
+    empty.textContent = '已建立私聊，你可以开始提问。';
+    privateMessagesEl.appendChild(empty);
+    return;
+  }
+  for (const message of messages) {
+    renderPrivateMessage(message);
+  }
+  privateMessagesEl.scrollTop = privateMessagesEl.scrollHeight;
+}
+
+async function openPrivateChatFromSenior(senior) {
+  if (!token) {
+    showToast('请先登录');
+    return;
+  }
+  if (!senior?.id) {
+    showToast('该卡片缺少有效学长信息');
+    return;
+  }
+
+  try {
+    const conversation = await ensurePrivateConversation(senior);
+    await openPrivateConversation(conversation);
+    await loadConversations();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function openPrivateConversation(conversation) {
+  if (!conversation?.id || !conversation?.seniorProfile) {
+    showToast('该私聊会话数据不完整');
+    return;
+  }
+  privateConversationId = conversation.id;
+  privateSeniorProfile = conversation.seniorProfile;
+  currentConversationId = null;
+
+  if (privateChatTitleEl) {
+    privateChatTitleEl.textContent = isSeniorViewer()
+      ? `回复 ${conversation.user?.username || '用户'}`
+      : `与${conversation.seniorProfile.name || '学长学姐'}私聊`;
+  }
+  if (privateChatMetaEl) {
+    privateChatMetaEl.textContent = formatSeniorSummary(
+      conversation.seniorProfile,
+      conversation.user ?? null,
+    );
+  }
+
+  openPrivateChatModal();
+  showPrivateLoadingState();
+
+  try {
+    await loadPrivateConversationMessages();
+    startPrivatePolling();
+    if (privateQuestionInputEl) privateQuestionInputEl.focus();
+  } catch (error) {
+    showToast(error.message);
+    closePrivateChatModal();
+  }
+}
+
 function renderMentorCards(references) {
   const validRefs = (references ?? []).filter((ref) => ref?.entry?.seniorProfile);
   if (!validRefs.length) return null;
@@ -96,7 +344,9 @@ function renderMentorCards(references) {
 
   for (const group of grouped.values()) {
     const card = document.createElement('article');
-    card.className = 'mentor-card';
+    card.className = 'mentor-card mentor-card-clickable';
+    card.setAttribute('role', 'button');
+    card.tabIndex = 0;
 
     const header = document.createElement('div');
     header.className = 'mentor-header';
@@ -154,10 +404,28 @@ function renderMentorCards(references) {
     ].join(' | ');
     refsLine.textContent = `关联资料：${refText}`;
 
+    const actionHint = document.createElement('p');
+    actionHint.className = 'mentor-action-hint';
+    actionHint.textContent = '点击进入私聊';
+
     card.appendChild(header);
     if (meta.childNodes.length) card.appendChild(meta);
     card.appendChild(why);
     card.appendChild(refsLine);
+    card.appendChild(actionHint);
+    card.addEventListener('click', () => {
+      openPrivateChatFromSenior(group.senior).catch((error) => {
+        showToast(error.message);
+      });
+    });
+    card.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openPrivateChatFromSenior(group.senior).catch((error) => {
+          showToast(error.message);
+        });
+      }
+    });
     cards.appendChild(card);
   }
 
@@ -206,6 +474,12 @@ function clearMessages() {
 async function refreshMeAndProfile() {
   if (!token) {
     if (userBadge) userBadge.textContent = '未登录';
+    if (conversationHintEl) {
+      conversationHintEl.textContent = '建议提具体问题，例如“我想冲中金暑期实习，接下来 8 周如何安排？”';
+    }
+    if (newConversationBtn) {
+      newConversationBtn.classList.remove('hidden');
+    }
     me = null;
     applyProfilePageState();
     return;
@@ -215,6 +489,15 @@ async function refreshMeAndProfile() {
     me = await api('/auth/me');
     me.role = normalizeRole(me.role);
     if (userBadge) userBadge.textContent = `${me.username} (${me.email})`;
+    if (conversationHintEl) {
+      conversationHintEl.textContent =
+        me.role === 'SENIOR'
+          ? '这里显示咨询者发来的私聊，你可以点开并直接回复。'
+          : '建议提具体问题，例如“我想冲中金暑期实习，接下来 8 周如何安排？”';
+    }
+    if (newConversationBtn) {
+      newConversationBtn.classList.toggle('hidden', me.role === 'SENIOR');
+    }
     applyProfilePageState();
     if (byId('profileForm')) {
       const profileData = await api('/profile/me');
@@ -246,20 +529,29 @@ async function loadConversations() {
     conversationListEl.innerHTML = '';
     return;
   }
-  const conversations = await api('/chat/conversations');
+  const conversations = isSeniorViewer()
+    ? await api('/chat/private/inbox')
+    : await api('/chat/conversations');
   conversationListEl.innerHTML = '';
-
-  for (const convo of conversations) {
-    const item = document.createElement('div');
-    item.className = `list-item ${currentConversationId === convo.id ? 'active' : ''}`;
-    item.textContent = `${convo.title || '未命名会话'} (${convo._count.messages})`;
-    item.onclick = async () => {
-      currentConversationId = convo.id;
-      await loadConversationMessages();
-      await loadConversations();
-    };
-    conversationListEl.appendChild(item);
+  if (!conversations.length) {
+    const empty = document.createElement('p');
+    empty.className = 'list-empty';
+    empty.textContent = isSeniorViewer()
+      ? '还没有用户向你发起私聊。'
+      : '还没有会话，发起提问或点击学长卡片开始。';
+    conversationListEl.appendChild(empty);
+    return;
   }
+
+  if (isSeniorViewer()) {
+    appendConversationSection(conversationListEl, '收到的私聊', conversations);
+    return;
+  }
+
+  const privateConversations = conversations.filter((convo) => convo.seniorProfile);
+  const aiConversations = conversations.filter((convo) => !convo.seniorProfile);
+  appendConversationSection(conversationListEl, '私聊会话', privateConversations);
+  appendConversationSection(conversationListEl, 'AI 会话', aiConversations);
 }
 
 async function loadConversationMessages() {
@@ -273,10 +565,12 @@ async function loadConversationMessages() {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-async function createConversation(title = '') {
+async function createConversation(title = '', seniorProfileId = null) {
+  const payload = { title };
+  if (seniorProfileId) payload.seniorProfileId = seniorProfileId;
   const convo = await api('/chat/conversations', {
     method: 'POST',
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(payload),
   });
   currentConversationId = convo.id;
   await loadConversations();
@@ -360,8 +654,12 @@ if (logoutBtn) {
   logoutBtn.addEventListener('click', async () => {
     setAuthToken('');
     currentConversationId = null;
+    privateConversationId = null;
+    privateSeniorProfile = null;
     me = null;
     clearMessages();
+    clearPrivateMessages();
+    closePrivateChatModal();
     await refreshMeAndProfile();
     await loadConversations();
     showToast('已退出');
@@ -400,6 +698,7 @@ const newConversationBtn = byId('newConversationBtn');
 if (newConversationBtn) {
   newConversationBtn.addEventListener('click', async () => {
     if (!token) return showToast('请先登录');
+    if (isSeniorViewer()) return showToast('Senior 账号请处理收到的私聊消息');
     await createConversation();
   });
 }
@@ -409,6 +708,7 @@ if (askForm) {
   askForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!token) return showToast('请先登录');
+  if (isSeniorViewer()) return showToast('Senior 账号请在私聊会话中回复用户消息');
 
   const questionInput = byId('questionInput');
   const question = questionInput.value.trim();
@@ -432,6 +732,68 @@ if (askForm) {
   } catch (error) {
     showToast(error.message);
   }
+  });
+}
+
+if (closePrivateChatBtn) {
+  closePrivateChatBtn.addEventListener('click', () => {
+    closePrivateChatModal();
+  });
+}
+
+if (privateChatMaskEl) {
+  privateChatMaskEl.addEventListener('click', () => {
+    closePrivateChatModal();
+  });
+}
+
+if (privateChatModalEl) {
+  privateChatModalEl.addEventListener('click', (event) => {
+    if (event.target === privateChatModalEl) {
+      closePrivateChatModal();
+    }
+  });
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && privateChatModalEl && !privateChatModalEl.classList.contains('hidden')) {
+    closePrivateChatModal();
+  }
+});
+
+if (privateVideoBtn) {
+  privateVideoBtn.addEventListener('click', () => {
+    showToast('视频功能正在规划中，敬请期待');
+  });
+}
+
+if (privateVoiceBtn) {
+  privateVoiceBtn.addEventListener('click', () => {
+    showToast('语音功能正在规划中，敬请期待');
+  });
+}
+
+if (privateAskFormEl) {
+  privateAskFormEl.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!token) return showToast('请先登录');
+    if (!privateConversationId) return showToast('请先从学长学姐卡片进入私聊');
+    const question = privateQuestionInputEl?.value.trim();
+    if (!question) return;
+
+    if (privateQuestionInputEl) privateQuestionInputEl.value = '';
+
+    try {
+      const message = await api(`/chat/conversations/${privateConversationId}/private-messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content: question }),
+      });
+      renderPrivateMessage(message);
+      if (privateMessagesEl) privateMessagesEl.scrollTop = privateMessagesEl.scrollHeight;
+      await loadConversations();
+    } catch (error) {
+      showToast(error.message);
+    }
   });
 }
 
@@ -657,7 +1019,7 @@ async function init() {
     await loadSeniors();
   }
   await loadConversations();
-  if (!currentConversationId && token && conversationListEl) {
+  if (!isSeniorViewer() && !currentConversationId && token && conversationListEl) {
     const list = await api('/chat/conversations');
     if (list.length) {
       currentConversationId = list[0].id;

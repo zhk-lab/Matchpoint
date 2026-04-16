@@ -26,7 +26,7 @@
           <h3>历史会话</h3>
           <button id="newConversationBtn">新建会话</button>
         </div>
-        <p class="subtle">建议提具体问题，例如“我想冲中金暑期实习，接下来 8 周如何安排？”</p>
+        <p id="conversationHint" class="subtle">建议提具体问题，例如“我想冲中金暑期实习，接下来 8 周如何安排？”</p>
         <div id="conversationList" class="list"></div>
       </aside>
 
@@ -48,6 +48,78 @@
         </form>
       </section>
     </main>
+
+    <div id="privateChatModal" class="private-chat-modal hidden" role="dialog" aria-modal="true">
+      <div id="privateChatMask" class="private-chat-mask"></div>
+      <section class="private-chat-panel card">
+        <header class="private-chat-header">
+          <div>
+            <h3 id="privateChatTitle">与学长学姐私聊</h3>
+            <p id="privateChatMeta" class="subtle">点击明信片即可进入专属私聊</p>
+          </div>
+          <div class="private-chat-actions">
+            <button
+              id="privateVideoBtn"
+              type="button"
+              class="private-action-btn"
+              aria-label="视频通话"
+              data-tooltip="视频通话"
+              title="视频通话"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M4.75 7.75a2 2 0 0 1 2-2h7.5a2 2 0 0 1 2 2v1.35l2.95-1.8a1 1 0 0 1 1.55.85v7.7a1 1 0 0 1-1.55.85l-2.95-1.8v1.35a2 2 0 0 1-2 2h-7.5a2 2 0 0 1-2-2z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              id="privateVoiceBtn"
+              type="button"
+              class="private-action-btn"
+              aria-label="语音通话"
+              data-tooltip="语音通话"
+              title="语音通话"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 4.75a2.75 2.75 0 0 1 2.75 2.75v4.75a2.75 2.75 0 1 1-5.5 0V7.5A2.75 2.75 0 0 1 12 4.75Z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M6.75 11.75a5.25 5.25 0 0 0 10.5 0M12 17v2.25M9 19.25h6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button id="closePrivateChatBtn" type="button" class="secondary">关闭</button>
+          </div>
+        </header>
+        <div id="privateMessages" class="private-messages"></div>
+        <form id="privateAskForm" class="ask-bar private-ask-bar">
+          <textarea
+            id="privateQuestionInput"
+            name="question"
+            rows="2"
+            placeholder="在这里继续和这位学长学姐私聊..."
+            required
+          ></textarea>
+          <button type="submit">发送</button>
+        </form>
+      </section>
+    </div>
 
     <div id="toast" class="toast hidden"></div>
     <script src="/app.js"></script>

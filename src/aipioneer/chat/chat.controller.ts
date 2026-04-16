@@ -11,6 +11,7 @@ import { CurrentUserId } from '../auth/current-user-id.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AskDto } from './dto/ask.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { SendPrivateMessageDto } from './dto/send-private-message.dto';
 import { ChatService } from './chat.service';
 
 @UseGuards(JwtAuthGuard)
@@ -31,6 +32,11 @@ export class ChatController {
     return this.chatService.listConversations(userId);
   }
 
+  @Get('private/inbox')
+  listPrivateInbox(@CurrentUserId() userId: number) {
+    return this.chatService.listPrivateInbox(userId);
+  }
+
   @Get('conversations/:conversationId/messages')
   listMessages(
     @CurrentUserId() userId: number,
@@ -46,5 +52,14 @@ export class ChatController {
     @Body() dto: AskDto,
   ) {
     return this.chatService.ask(userId, conversationId, dto);
+  }
+
+  @Post('conversations/:conversationId/private-messages')
+  sendPrivateMessage(
+    @CurrentUserId() userId: number,
+    @Param('conversationId', ParseIntPipe) conversationId: number,
+    @Body() dto: SendPrivateMessageDto,
+  ) {
+    return this.chatService.sendPrivateMessage(userId, conversationId, dto);
   }
 }
